@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>パチモンGO - GPSテスト</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f0f0; }
+        button { padding: 15px 30px; font-size: 18px; background: #007BFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <h1>パチモンGO GPSテスト</h1>
+    <p>ターゲット：台北101の近く（50m以内）に行こう！</p>
+    
+    <button onclick="checkLocation()">現在地をチェック</button>
+    
+    <div id="result">ここに結果が表示されます</div>
+
+    <script>
+        // 【テスト】ターゲットの座標（例：台北101の緯度・経度）
+        // 日本でテストする時は、ここを近くのコンビニなどの座標に変えてください
+        const targetLat = 25.033964; 
+        const targetLng = 121.564468; 
+
+        // 2点の距離を計算する関数
+        function getDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371000; // 地球の半径 (m)
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        // スマホのGPSを取得して判定する関数
+        function checkLocation() {
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerText = "GPSを測定中...";
+
+            // スマホに位置情報の許可を求める
+            if (!navigator.geolocation) {
+                resultDiv.innerText = "お使いのブラウザはGPSに対応していません。";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLng = position.coords.longitude;
+                    
+                    // 距離を計算
+                    const distance = getDistance(userLat, userLng, targetLat, targetLng);
+                    
+                    if (distance <= 50) {
+                        resultDiv.innerHTML = `<span style="color: green;">【出現！】ターゲットまであと ${Math.round(distance)}m です！イベント発生！</span>`;
+                    } else {
+                        resultDiv.innerHTML = `<span style="color: red;">【まだ遠い】ターゲットまであと ${Math.round(distance)}m です。<br>（50m以内に近づいてね）</span>`;
+                    }
+                },
+                (error) => {
+                    resultDiv.innerText = "位置情報の取得に失敗しました。設定でGPSを許可してください。";
+                    console.error(error);
+                },
+                { enableHighAccuracy: true } // 精度を高くする設定
+            );
+        }
+    </script>
+</body>
+</html>
